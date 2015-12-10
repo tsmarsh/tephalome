@@ -5,9 +5,10 @@
 (deftest rsa
   (let [{public :public
          private :private} (generate-keys)
-        message "The quick brown fox jumps over the lazy log"
-        algo "RSA"
-        e (encrypt algo public)
-        d (decrypt algo private)]
+        message "AES Key"
+        s-pub (serialize public)
+        pub (gen-public s-pub)
+        e (encrypt pub)
+        d (decrypt private)]
     (testing "end-to-end"
-      (= message (d (e message))))))
+      (is (= message (d (e message)))))))
