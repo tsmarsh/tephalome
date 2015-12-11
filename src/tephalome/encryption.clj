@@ -25,8 +25,6 @@
     (let [cipher (doto (Cipher/getInstance "RSA")
                        (.init Cipher/ENCRYPT_MODE public))
           bs (.getBytes message)]
-      (println "Count: " (count bs))
-      (println "BS: " bs)
       (String. (b64/encode (.doFinal cipher bs))))))
 
 (defn decrypt
