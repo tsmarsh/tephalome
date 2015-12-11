@@ -1,4 +1,4 @@
-(ns tephalome.encryption
+(ns tephalome.encryption.rsa
   (:gen-class)
   (:require [clojure.data.codec.base64 :as b64]
             [clojure.string :as s])

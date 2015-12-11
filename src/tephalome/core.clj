@@ -1,6 +1,6 @@
 (ns tephalome.core
   (:require [org.httpkit.server :as s]
-            [tephalome.encryption :as e]))
+            [tephalome.encryption.rsa :as e]))
 
 (defonce server (atom nil))
 

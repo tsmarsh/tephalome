@@ -1,5 +1,5 @@
-(ns tephalome.encryption-test
-  (:require [tephalome.encryption :refer :all]
+(ns tephalome.encryption.rsa-test
+  (:require [tephalome.encryption.rsa :refer :all]
             [clojure.test :refer :all]))
 
 (deftest rsa

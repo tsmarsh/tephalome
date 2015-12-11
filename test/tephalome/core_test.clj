@@ -1,7 +1,7 @@
 (ns tephalome.core-test
   (:require [clojure.test :refer :all]
             [tephalome.core :as t]
-            [tephalome.encryption :as e]
+            [tephalome.encryption.rsa :as e]
             [org.httpkit.client :as http]
             [clojure.edn :as edn]))
 
