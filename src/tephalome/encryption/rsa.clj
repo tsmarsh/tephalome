@@ -8,7 +8,7 @@
            (java.math BigInteger)
            (org.bouncycastle.jce.provider BouncyCastleProvider)))
 
-(set *warn-on-reflection*)
+(set! *warn-on-reflection* true)
 
 (Security/addProvider (BouncyCastleProvider.))
 
@@ -20,30 +20,31 @@
      :private (.getPrivate key-pair)}))
 
 (defn encrypt
-  [public]
-  (fn [message]
-    (let [cipher (doto (Cipher/getInstance "RSA")
-                       (.init Cipher/ENCRYPT_MODE public))
-          bs (.getBytes message)]
-      (String. (b64/encode (.doFinal cipher bs))))))
+  [^java.security.PublicKey public] 
+  (let [^Cipher cipher (doto (Cipher/getInstance "RSA")
+                         (.init Cipher/ENCRYPT_MODE public))]    
+    (fn [^String message]
+      (let [bs (.getBytes message)
+            ^bytes decoded (b64/encode (.doFinal cipher bs))]
+        (String. decoded)))))
 
 (defn decrypt
-  [private]
-  (fn [message]
-    (let [cipher (Cipher/getInstance "RSA")
-          bs (b64/decode (.getBytes  message))]
-      (.init cipher Cipher/DECRYPT_MODE private)
-      (String. (.doFinal cipher bs)))))
+  [^java.security.PrivateKey private]
+  (let [^Cipher cipher (Cipher/getInstance "RSA")]
+    (.init cipher Cipher/DECRYPT_MODE private)
+    (fn [^String message]
+      (let [bs (b64/decode (.getBytes  message))]
+        (String. (.doFinal cipher bs))))))
 
 (defn serialize
-  [key]
-  (let [mod (.getModulus key)
-        exp (.getPublicExponent key)]
+  [^java.security.interfaces.RSAPublicKey key]
+  (let [^BigInteger mod (.getModulus key)
+        ^BigInteger exp (.getPublicExponent key)]
     (str  mod "|" exp)))
 
 (defn gen-public
-  [s]
-  (let [[s-mod, s-exp] (s/split s #"\|")
+  [^String s]
+  (let [[^String s-mod ^String s-exp] (s/split s #"\|")
         mod (BigInteger. s-mod)
         exp (BigInteger. s-exp)]
     (.generatePublic (KeyFactory/getInstance "RSA") (RSAPublicKeySpec. mod exp))))
