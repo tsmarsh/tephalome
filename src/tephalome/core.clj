@@ -2,20 +2,22 @@
   (:require [org.httpkit.server :as s]
             [tephalome.encryption.rsa :as e]
             [tephalome.encryption.aes :as aes])
+  
   (:use [compojure.route :only [files not-found]]
         [compojure.handler :only [site]] ; form, query params decode; cookie; session, etc
         [compojure.core :only [defroutes GET]]))
 
 (defonce server (atom nil))
 
+(def rooms (atom []))
+
 (defn room-list
   [req]
-  (let [
-        public-key (get (:headers req) "x-public-key")
+  (let [public-key (get (:headers req) "x-public-key")
         key (e/gen-public public-key)
         aes-key (aes/generate-key)
         a-fn (aes/encrypt aes-key)
-        body (a-fn "[]")]
+        body (a-fn (str @rooms))]
     {:status  200
      :headers {"Content-Type" "application/edn"
                "x-key"(e/encrypt aes-key key)}
