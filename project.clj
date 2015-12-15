@@ -6,4 +6,7 @@
   :dependencies [[org.clojure/clojure "1.7.0"]
                  [http-kit "2.1.18"]
                  [org.clojure/data.codec "0.1.0"]
-                 [org.bouncycastle/bcprov-jdk15on "1.53"]])
+                 [org.bouncycastle/bcprov-jdk15on "1.53"]
+                 [compojure "1.4.0"]
+                 [javax.servlet/servlet-api "2.5"]]
+  :plugins [[lein-cloverage "1.0.6"]])

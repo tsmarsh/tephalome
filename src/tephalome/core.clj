@@ -1,7 +1,10 @@
 (ns tephalome.core
   (:require [org.httpkit.server :as s]
             [tephalome.encryption.rsa :as e]
-            [tephalome.encryption.aes :as aes]))
+            [tephalome.encryption.aes :as aes])
+  (:use [compojure.route :only [files not-found]]
+        [compojure.handler :only [site]] ; form, query params decode; cookie; session, etc
+        [compojure.core :only [defroutes GET]]))
 
 (defonce server (atom nil))
 
@@ -17,8 +20,11 @@
                "x-key"(e/encrypt aes-key key)}
      :body    body}))
 
+(defroutes all-routes
+  (GET "/" [] app))
+
 (defn start [port] 
-  (reset! server (s/run-server #'app {:port port})))
+  (reset! server (s/run-server #'all-routes {:port port})))
 
 (defn stop []
   (when-not (nil? @server)
