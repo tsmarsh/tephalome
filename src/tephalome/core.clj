@@ -1,6 +1,7 @@
 (ns tephalome.core
   (:require [org.httpkit.server :as s]
-            [tephalome.encryption.rsa :as e]))
+            [tephalome.encryption.rsa :as e]
+            [tephalome.encryption.aes :as aes]))
 
 (defonce server (atom nil))
 
@@ -8,11 +9,12 @@
   (let [
         public-key (get (:headers req) "x-public-key")
         key (e/gen-public public-key)
-        e-fn (e/encrypt key)
-        body (e-fn "[]")
-        ]
+        aes-key (aes/generate-key)
+        a-fn (aes/encrypt aes-key)
+        body (a-fn "[]")]
     {:status  200
-     :headers {"Content-Type" "application/edn"}
+     :headers {"Content-Type" "application/edn"
+               "x-key"(e/encrypt aes-key key)}
      :body    body}))
 
 (defn start [port] 

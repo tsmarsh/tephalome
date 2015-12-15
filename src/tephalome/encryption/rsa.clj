@@ -3,6 +3,7 @@
   (:require [clojure.data.codec.base64 :as b64]
             [clojure.string :as s])
   (:import (javax.crypto Cipher)
+           (javax.crypto.spec SecretKeySpec)
            (java.security Security KeyFactory)
            (java.security.spec RSAPublicKeySpec)
            (java.math BigInteger)
@@ -12,6 +13,41 @@
 
 (Security/addProvider (BouncyCastleProvider.))
 
+(defn _encrypt
+  [^java.security.PublicKey public] 
+  (let [^Cipher cipher (doto (Cipher/getInstance "RSA")
+                         (.init Cipher/ENCRYPT_MODE public))]    
+    (fn [^bytes message]
+      (let [bs message]
+        (.doFinal cipher message)))))
+
+(defn _decrypt
+  [^java.security.PrivateKey private]
+  (let [^Cipher cipher (doto (Cipher/getInstance "RSA")
+                         (.init Cipher/DECRYPT_MODE private))]
+    (fn [^bytes message]
+      (let [bs (b64/decode message)]
+        (.doFinal cipher bs)))))
+
+(defprotocol Encryptable
+  (encrypt [this k]))
+
+(extend-type SecretKeySpec
+  Encryptable
+  (encrypt [this k] 
+    (let [base (_encrypt k)
+          ^bytes bits  (b64/encode (base (.getEncoded this)))]
+      (String. bits))))
+
+(extend-type String
+  Encryptable
+  (encrypt [this k]
+    (let [base (_encrypt k)
+          ^bytes bits  (b64/encode (base (.getBytes this)))]
+      (String. bits))))
+
+
+
 (defn generate-keys []
   (let [generator (doto (java.security.KeyPairGenerator/getInstance "RSA")
                     (.initialize 1024))
@@ -19,22 +55,21 @@
     {:public (.getPublic key-pair)
      :private (.getPrivate key-pair)}))
 
-(defn encrypt
-  [^java.security.PublicKey public] 
-  (let [^Cipher cipher (doto (Cipher/getInstance "RSA")
-                         (.init Cipher/ENCRYPT_MODE public))]    
-    (fn [^String message]
-      (let [bs (.getBytes message)
-            ^bytes decoded (b64/encode (.doFinal cipher bs))]
-        (String. decoded)))))
-
-(defn decrypt
+(defn decrypt-string
   [^java.security.PrivateKey private]
-  (let [^Cipher cipher (Cipher/getInstance "RSA")]
-    (.init cipher Cipher/DECRYPT_MODE private)
+  (let [base (_decrypt private)]
     (fn [^String message]
-      (let [bs (b64/decode (.getBytes  message))]
-        (String. (.doFinal cipher bs))))))
+      (let [bs (.getBytes  message)
+            ^bytes bits (base bs)]
+        (String. bits)))))
+
+(defn decrypt-key
+  [^java.security.PrivateKey private]
+  (let [base (_decrypt private)]
+    (fn [^String message]
+      (let [bs (.getBytes  message)
+            ^bytes bits (base bs)]
+        (SecretKeySpec. bits 0 (count bits) "AES")))))
 
 (defn serialize
   [^java.security.interfaces.RSAPublicKey key]
