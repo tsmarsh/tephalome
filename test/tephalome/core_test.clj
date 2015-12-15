@@ -18,8 +18,8 @@
 
 (use-fixtures :once start-server)
 
-(deftest test-app
-  (let [{:keys [status body headers] :as resp} (t/app options)
+(deftest test-room-list
+  (let [{:keys [status body headers] :as resp} (t/room-list options)
         x-key (get headers "x-key")
         k (d x-key)
         aes-fn (aes/decrypt k)

@@ -8,7 +8,8 @@
 
 (defonce server (atom nil))
 
-(defn app [req]
+(defn room-list
+  [req]
   (let [
         public-key (get (:headers req) "x-public-key")
         key (e/gen-public public-key)
@@ -21,7 +22,7 @@
      :body    body}))
 
 (defroutes all-routes
-  (GET "/" [] app))
+  (GET "/" [] room-list))
 
 (defn start [port] 
   (reset! server (s/run-server #'all-routes {:port port})))
