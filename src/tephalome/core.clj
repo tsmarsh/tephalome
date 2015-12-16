@@ -9,7 +9,13 @@
 
 (defonce server (atom nil))
 
-(def rooms (atom []))
+(def rooms (atom {}))
+
+(defn touch
+  [room-list
+   name
+   public-key]
+  (swap! room-list update-in [name] conj public-key))
 
 (defn room-list
   [req]
@@ -18,6 +24,19 @@
         aes-key (aes/generate-key)
         a-fn (aes/encrypt aes-key)
         body (a-fn (str @rooms))]
+    {:status  200
+     :headers {"Content-Type" "application/edn"
+               "x-key"(e/encrypt aes-key key)}
+     :body    body}))
+
+(defn room-touch
+  [req]
+  (let [public-key (get (:headers req) "x-public-key")
+        key (e/gen-public public-key)
+        aes-key (aes/generate-key)
+        a-fn (aes/encrypt aes-key)
+        name (keyword (-> req :params :name))
+        body (a-fn (pr-str (map e/serialize (name (touch rooms name key)))))]
     {:status  200
      :headers {"Content-Type" "application/edn"
                "x-key"(e/encrypt aes-key key)}

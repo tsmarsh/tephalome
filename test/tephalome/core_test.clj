@@ -27,7 +27,20 @@
     (testing "correct status" 
       (is (= 200 status)))
     (testing "returns empty list" 
-      (is (= [] (edn/read-string m))))))
+      (is (= {} (edn/read-string m))))))
+
+(deftest test-room-touch
+  (let [{:keys [status body headers] :as resp}
+        (t/room-touch (assoc  options :params {:name "test-room"}))
+        x-key (get headers "x-key")
+        k (d x-key)
+        aes-fn (aes/decrypt k)
+        m (aes-fn body)] 
+    (testing "correct status" 
+      (is (= 200 status)))
+    (let [members (edn/read-string m)]
+      (testing "you are a member of the room"
+        (is (= [(e/serialize (:public ks))] members))))))
 
 (deftest room
   (let [{:keys [status body headers] :as resp} @(http/get "http://localhost:6666/" options)
@@ -38,4 +51,4 @@
     (testing "correct status" 
       (is (= 200 status)))
     (testing "returns empty list" 
-      (is (= [] (edn/read-string m)))))) 
+      (is (= {} (edn/read-string m)))))) 
