@@ -5,7 +5,7 @@
   
   (:use [compojure.route :only [files not-found]]
         [compojure.handler :only [site]] ; form, query params decode; cookie; session, etc
-        [compojure.core :only [defroutes GET]]))
+        [compojure.core :only [defroutes GET POST]]))
 
 (defonce server (atom nil))
 
@@ -43,7 +43,8 @@
      :body    body}))
 
 (defroutes all-routes
-  (GET "/" [] room-list))
+  (GET "/rooms" [] room-list)
+  (POST "/rooms/:name" [] room-touch))
 
 (defn start [port] 
   (reset! server (s/run-server #'all-routes {:port port})))

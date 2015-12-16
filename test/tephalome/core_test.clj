@@ -16,14 +16,21 @@
   (f)
   (t/stop))
 
+(defn rooms-and-corners
+  [f]
+  (reset! t/rooms {})
+  (f))
+
 (use-fixtures :once start-server)
+
+(use-fixtures :each rooms-and-corners)
 
 (deftest test-room-list
   (let [{:keys [status body headers] :as resp} (t/room-list options)
         x-key (get headers "x-key")
         k (d x-key)
         aes-fn (aes/decrypt k)
-        m (aes-fn body)] 
+        m (aes-fn body)]
     (testing "correct status" 
       (is (= 200 status)))
     (testing "returns empty list" 
@@ -43,7 +50,7 @@
         (is (= [(e/serialize (:public ks))] members))))))
 
 (deftest room
-  (let [{:keys [status body headers] :as resp} @(http/get "http://localhost:6666/" options)
+  (let [{:keys [status body headers] :as resp} @(http/get "http://localhost:6666/rooms" options)
         {x-key :x-key} headers
         k (d x-key)
         aes-fn (aes/decrypt k)
@@ -52,3 +59,16 @@
       (is (= 200 status)))
     (testing "returns empty list" 
       (is (= {} (edn/read-string m)))))) 
+
+(deftest room-touch
+  (let [{:keys [status body headers] :as resp}
+        @(http/post "http://localhost:6666/rooms/test-room" options)
+        {x-key :x-key} headers
+        k (d x-key)
+        aes-fn (aes/decrypt k)
+        m (aes-fn (slurp  body))] 
+    (testing "correct status" 
+      (is (= 200 status)))
+    (let [members (edn/read-string m)]
+      (testing "you are a member of the room"
+        (is (= [(e/serialize (:public ks))] members))))))
