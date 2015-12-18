@@ -17,13 +17,17 @@
    public-key]
   (swap! room-list update-in [name] conj public-key))
 
+(defn serialize-room
+  [room]
+  (str (reduce (fn [ks k] (conj ks (e/serialize k))) [] room)))
+
 (defn room-list
   [req]
   (let [public-key (get (:headers req) "x-public-key")
         key (e/gen-public public-key)
         aes-key (aes/generate-key)
         a-fn (aes/encrypt aes-key)
-        body (a-fn (str @rooms))]
+        body (a-fn (pr-str @rooms))]
     {:status  200
      :headers {"Content-Type" "application/edn"
                "x-key"(e/encrypt aes-key key)}
@@ -36,7 +40,10 @@
         aes-key (aes/generate-key)
         a-fn (aes/encrypt aes-key)
         name (keyword (-> req :params :name))
-        body (a-fn (pr-str (map e/serialize (name (touch rooms name key)))))]
+        body (-> (touch rooms name key)
+                 name
+                 serialize-room
+                 a-fn)]
     {:status  200
      :headers {"Content-Type" "application/edn"
                "x-key"(e/encrypt aes-key key)}
